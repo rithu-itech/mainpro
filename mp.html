@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2 style="text-align: center;">Student Manager</h2>
+    <p style="text-align: center;">Total Number of Students: <span id="studentCount">0</span></p>
+    <div class="container" id="forms">
+        <form onsubmit="saveToCrudCrud(event)">
+            <label>Name</label>
+            <input type="text" name="studentname" id="studentNameInput" required/>
+            <label>Email ID</label>
+            <input type="email" name="emailId" id="emailInput" required/>
+            <label>Address</label>
+            <input type="text" name="address" id="addressInput">
+            <button>Add</button>
+        </form>
+    </div>
+    <ul id="listOfStudents"></ul>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
+</body>
+</html>
+
+<script>
+    let studentCount = 0;
+
+    function saveToCrudCrud(event) {
+        event.preventDefault();
+        const name = event.target.studentname.value;
+        const email = event.target.emailId.value;
+        const address = event.target.address.value;
+        const newStudent = {
+            name,  
+            email,
+            address
+        };
+
+        axios.post("https://crudcrud.com/api/64a7b305bf054307a1d3c982a4e2e1df/StudentData", newStudent)
+            .then((response) => {
+                studentCount++;
+                updateStudentCount();
+                showOnStudentScreen(response.data);
+                event.target.reset();
+            })
+            .catch((error) => {
+                document.body.innerHTML += "<h3>Something Went Wrong</h3>";
+                console.log(error);
+            });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        axios.get("https://crudcrud.com/api/64a7b305bf054307a1d3c982a4e2e1df/StudentData")
+            .then((response) => {
+                studentCount = response.data.length;
+                updateStudentCount();
+                for (let i = 0; i < response.data.length; i++) {
+                    showOnStudentScreen(response.data[i]);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    });
+
+    function updateStudentCount() {
+        document.getElementById("studentCount").textContent = studentCount;
+    }
+
+    function showOnStudentScreen(student) {
+        let studentList = document.getElementById("listOfStudents");
+        const listItem = `<li id=${student._id}>${student.name}-${student.email}-${student.address}
+            <button onclick=deleteStudent('${student._id}')>Delete</button>
+            <button onclick=editStudentDetail('${student.name}','${student.email}','${student.address}','${student._id}')>Edit</button></li>`;
+
+        studentList.innerHTML += listItem;
+    }
+
+    function editStudentDetail(name, email, address, studentId) {
+        document.getElementById('studentNameInput').value = name;
+        document.getElementById('emailInput').value = email;
+        document.getElementById('addressInput').value = address;
+
+        deleteStudent(studentId);
+    }
+
+    function deleteStudent(studentId) {
+        axios.delete(`https://crudcrud.com/api/64a7b305bf054307a1d3c982a4e2e1df/StudentData/${studentId}`)
+            .then(() => {
+                removeStudentFromScreen(studentId);
+            })
+            .catch((err) => {
+                document.body.innerHTML += "<h3>Something Went Wrong</h3>";
+                console.log(err);
+            });
+    }
+
+    function removeStudentFromScreen(studentId) {
+        let studentList = document.getElementById('listOfStudents');
+        const studentItem = document.getElementById(studentId);
+        studentList.removeChild(studentItem);
+        studentCount--;
+        updateStudentCount();
+    }
+</script>
